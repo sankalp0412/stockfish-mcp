@@ -1,10 +1,15 @@
 # flake8: noqa
+import base64
+from io import BytesIO
 import os
 from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
+from mcp.types import ImageContent
 from stockfish import Stockfish, StockfishException
 from .models.game import Game
 from .database import get_redis_client, save_game_to_redis, get_game_by_game_id, delete_game_by_game_id
+from PIL import Image
+import requests
 
 load_dotenv()
 userdata = os.environ
@@ -63,6 +68,50 @@ async def start_game(user_elo: int | str = 3000) -> str:
     except Exception as e:
         return f"Error while starting game: {e}"
 
+
+
+@mcp.tool()
+async def get_board_visual(game_id: str) -> ImageContent | str:
+    """
+    Generates a visual representation of the current chess board position.
+    
+    Args:
+        game_id (str): The unique identifier of the game.
+    
+    Returns:
+        ImageContent: Board Visual
+    """
+    base_url = "https://fen2image.chessvision.ai/"
+    game = get_game_by_game_id(game_id=game_id, redis_client=redis_client)
+    if game is None:
+        return "Game not found"
+    
+    current_fen = game.get_fen()
+    image_url = base_url + current_fen
+    
+    try:
+        response = requests.get(image_url, timeout=10)
+        response.raise_for_status()
+        
+        # Convert image to base64
+        img = Image.open(BytesIO(response.content))
+        buffered = BytesIO()
+        img.save(buffered, format="PNG")
+        img_base64 = base64.b64encode(buffered.getvalue()).decode()
+        
+        return ImageContent(
+            type="image",
+            data=img_base64,
+            mimeType="image/png"
+        )
+    except requests.RequestException as e:
+        return f"Error fetching board image: {e}"
+    except Exception as e:
+        return f"Error processing image: {e}"
+    
+    
+    
+    
 
 @mcp.tool()
 async def play_move(game_id: str, user_move: str) -> bool:
