@@ -3,9 +3,8 @@ import os
 from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
 from stockfish import Stockfish, StockfishException
-from games import Game
-from common import get_redis_client
-from redis_actions import save_game_to_redis,get_game_by_game_id,delete_game_by_game_id
+from .models.game import Game
+from .database import get_redis_client, save_game_to_redis, get_game_by_game_id, delete_game_by_game_id
 
 load_dotenv()
 userdata = os.environ
@@ -13,6 +12,7 @@ STOCKFISH_PATH = userdata.get("STOCKFISH_PATH")
 mcp = FastMCP("stockfish")
 
 redis_client = get_redis_client()
+
 
 @mcp.tool()
 async def get_best_moves(game_id: str) -> list | str:
@@ -26,8 +26,8 @@ async def get_best_moves(game_id: str) -> list | str:
     Returns:
         list: A list of the best moves suggested by the Stockfish engine for the given position.
     """
-    game = await get_game_by_game_id(game_id=game_id, redis_client=redis_client)
-    user_elo= game.get_elo()
+    game = get_game_by_game_id(game_id=game_id, redis_client=redis_client)
+    user_elo = game.get_elo()
     current_fen = game.get_fen()
     stockfish = Stockfish(path=STOCKFISH_PATH, parameters={"UCI_Elo": user_elo})
 
@@ -36,7 +36,7 @@ async def get_best_moves(game_id: str) -> list | str:
             return "The input fen String is invalid"
 
         stockfish.set_fen_position(current_fen)
-        res = await stockfish.get_top_moves(3)
+        res = stockfish.get_top_moves(3)
 
         return res
     except StockfishException as se:
@@ -57,26 +57,34 @@ async def start_game(user_elo: int | str = 3000) -> str:
     try:
         new_game = Game(user_elo=str(user_elo))
         game_id = new_game.get_game_id()
-        success = save_game_to_redis(game_id=game_id,game=new_game,redis_client=redis_client)
+        success = save_game_to_redis(game_id=game_id, game=new_game, redis_client=redis_client)
         if success:
             return game_id
     except Exception as e:
         return f"Error while starting game: {e}"
 
+
 @mcp.tool()
 async def play_move(game_id: str, user_move: str) -> bool:
     """
-    Validates the move, updates the game state, and returns True if the move is valid. 
-    If the move is invalid, returns False.
+    Validates and applies a chess move to the game state, then updates the database.
+    
+    IMPORTANT: This function must be called TWICE per turn:
+    1. First, after the user makes their move to update the game state
+    2. Second, after selecting and making the AI's response move from get_best_moves
+    
+    Both the user's moves and AI's moves must be played through this function to keep 
+    the game state synchronized in the database.
 
     Args:
         game_id (str): The unique identifier of the game.
-        user_move (str): The move played by the user in standard chess notation (UCI).
+        user_move (str): The move in standard UCI chess notation (e.g., 'e2e4', 'g1f3'). 
+                        Can be either a user move or an AI-selected move.
 
     Returns:
         bool: True if the move is valid and the game state is updated, False otherwise.
     """
-    game = await get_game_by_game_id(game_id=game_id, redis_client=redis_client)
+    game = get_game_by_game_id(game_id=game_id, redis_client=redis_client)
     if game is None:
         return False
 
@@ -112,5 +120,9 @@ async def close_game(game_id: str) -> bool:
         return False
 
 
-if __name__ == "__main__":
+def main():
     mcp.run(transport="stdio")
+
+
+if __name__ == "__main__":
+    main()

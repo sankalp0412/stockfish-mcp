@@ -1,13 +1,15 @@
 import chess
-from chess import Move, Square as chessSquare, Board,InvalidMoveError
+from chess import Move, Square as chessSquare, Board, InvalidMoveError
 
 from uuid import uuid4
 from typing import List
 import datetime
 from dataclasses import dataclass, field
 
+
 def get_new_uuid() -> str:
     return str(uuid4())
+
 
 @dataclass
 class Game:
@@ -15,10 +17,10 @@ class Game:
     game_id: str = field(default_factory=get_new_uuid)
     moves: List[str] = field(default_factory=list)
     fen: str = field(default=chess.STARTING_FEN)
-    
+
     def get_game_id(self):
         return str(self.game_id)
-    
+
     def play_move(self, move: str) -> bool:
         board = chess.Board(fen=self.fen)
         try:
@@ -37,6 +39,6 @@ class Game:
 
     def get_fen(self) -> str:
         return self.fen
-    
+
     def get_elo(self) -> str:
         return self.user_elo

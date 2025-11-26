@@ -469,7 +469,7 @@ wheels = [
 [[package]]
 name = "stockfish-mcp"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "annotated-types" },
     { name = "anyio" },
