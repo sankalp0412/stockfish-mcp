@@ -11,5 +11,3 @@ wheels/
 
 .env
 dump.rdb
-.python-version
-pyproject.toml
