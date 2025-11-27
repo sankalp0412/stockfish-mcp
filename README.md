@@ -9,6 +9,7 @@ A Model Context Protocol (MCP) server that integrates the Stockfish chess engine
 - 📊 Persistent game state storage using Redis
 - ♟️ Full UCI chess notation support
 - 🔄 Real-time game state updates
+- 🖼️ Visual board representation with auto-generated images
 
 ## Prerequisites
 
@@ -136,6 +137,13 @@ Claude will:
 - Select and play its response move
 - Keep the game state updated in the database
 
+### View the Board
+```
+Show me the current board position
+```
+
+Claude will display a visual representation of the chess board at any point in the game.
+
 ### Close a Game
 ```
 Close the game
@@ -150,6 +158,7 @@ Close the game
 | `start_game` | Initialize a new chess game | `user_elo` (optional, default: 3000) |
 | `get_best_moves` | Get top 3 moves for current position | `game_id` |
 | `play_move` | Validate and apply a move | `game_id`, `user_move` (UCI notation) |
+| `get_board_visual` | Generate visual board representation | `game_id` |
 | `close_game` | End game and remove from database | `game_id` |
 
 
