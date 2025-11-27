@@ -1,6 +1,15 @@
 # Stockfish MCP Server
 
 A Model Context Protocol (MCP) server that integrates the Stockfish chess engine with Claude Desktop, allowing you to play chess with AI assistance.
+<div align="center">
+
+🗓️ Natural Language Chess
+
+[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
+[![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
+[![MCP Compatible](https://img.shields.io/badge/MCP-Compatible-purple.svg)](https://modelcontextprotocol.io)
+
+</div>
 
 ## Features
 
