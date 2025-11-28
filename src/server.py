@@ -109,12 +109,33 @@ async def get_board_visual(game_id: str) -> ImageContent | str:
     except Exception as e:
         return f"Error processing image: {e}"
     
+@mcp.tool()
+async def validate_move(game_id:str, move:str) -> bool | str:
+    """
+    Validates a chess move for a given game.
+    This function checks whether the provided move is valid for the specified game.
+    It ensures that the move adheres to the rules of chess and is legal within the
+    current state of the game.
+    Args:
+        game_id (str): The unique identifier for the game.
+        move (str): The chess move to validate, typically in uci notation.
+    Returns:
+        bool: True if the move is valid, False otherwise.
+    """
+    game = get_game_by_game_id(game_id=game_id, redis_client=redis_client)
+    if game is None:
+        return "Game Not Found"
+    
+    is_valid: bool = game.is_move_valid(move)
+    
+    return is_valid
+    
     
     
     
 
 @mcp.tool()
-async def play_move(game_id: str, user_move: str) -> bool:
+async def play_move(game_id: str, user_move: str) -> bool | str:
     """
     Validates and applies a chess move to the game state, then updates the database.
     
@@ -135,7 +156,7 @@ async def play_move(game_id: str, user_move: str) -> bool:
     """
     game = get_game_by_game_id(game_id=game_id, redis_client=redis_client)
     if game is None:
-        return False
+        return "Game not found"
 
     previous_fen = game.get_fen()
     previous_moves = game.moves.copy()
@@ -152,7 +173,7 @@ async def play_move(game_id: str, user_move: str) -> bool:
 
 
 @mcp.tool()
-async def close_game(game_id: str) -> bool:
+async def close_game(game_id: str) -> bool | str:
     """
     Closes an ongoing chess game by removing its associated data from the Redis database.
 
@@ -165,8 +186,7 @@ async def close_game(game_id: str) -> bool:
         deleted = delete_game_by_game_id(game_id=game_id, redis_client=redis_client)
         return bool(deleted)
     except Exception as e:
-        print(f"Error while closing game: {e}")
-        return False
+        return(f"Error while closing game: {e}")
 
 
 def main():

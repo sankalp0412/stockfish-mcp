@@ -42,3 +42,13 @@ class Game:
 
     def get_elo(self) -> str:
         return self.user_elo
+
+    def is_move_valid(self, move:str) -> bool:
+        board = chess.Board(fen=self.fen)
+        try:
+            
+            uci_move: Move = Move.from_uci(move) 
+            return board.is_legal(uci_move)
+        except (chess.InvalidMoveError) as err:
+            return False
+            
